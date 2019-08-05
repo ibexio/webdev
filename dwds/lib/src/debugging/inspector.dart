@@ -293,14 +293,14 @@ function($argsString) {
         if (_asDartObject(remoteObject) == null) {
           return _primitiveInstance(InstanceKind.kNull, remoteObject);
         }
-        var toString = await toStringOf(remoteObject);
+        // var toString = await toStringOf(remoteObject);
         // TODO: Make the truncation consistent with the VM.
-        var truncated = toString.substring(0, math.min(100, toString.length));
+        // var truncated = toString.substring(0, math.min(100, toString.length));
         return InstanceRef()
           ..kind = InstanceKind.kPlainInstance
           ..id = remoteObject.objectId
-          ..valueAsString = toString
-          ..valueAsStringIsTruncated = truncated.length != toString.length
+          // ..valueAsString = toString
+          // ..valueAsStringIsTruncated = truncated.length != toString.length
           // TODO(jakemac): Create a real ClassRef, we need a way of looking
           // up the library for a given instance to create it though.
           // https://github.com/dart-lang/sdk/issues/36771.
@@ -335,8 +335,24 @@ function($argsString) {
     if (clazz != null) return clazz;
     var scriptRef = _scriptRefs[objectId];
     if (scriptRef != null) return await _getScript(isolateId, scriptRef);
-    throw UnsupportedError(
-        'Only libraries and classes are supported for getObject');
+    // #### Can we reasonably assume it's an instance id?
+    return await _mustBeAnInstance(objectId);
+    // throw UnsupportedError(
+    //     'Only libraries and classes are supported for getObject');
+  }
+
+  Future<Instance> _mustBeAnInstance(String objectId) async {
+    //  var fred = RemoteObject({'objectId': objectId});
+    var properties = await debugger.getProperties(objectId);
+    var refs =
+        properties.map<Future<BoundField>>((property) async => BoundField()
+          ..decl = (FieldRef()..name = property.name)
+          ..value = await inspector.instanceRefFor(property.value));
+    var stuff = await Future.wait(refs);
+    var result = Instance()
+      ..id = objectId
+      ..fields = stuff;
+    return result;
   }
 
   Future<Library> _constructLibrary(LibraryRef libraryRef) async {

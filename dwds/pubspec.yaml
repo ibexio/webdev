@@ -47,3 +47,9 @@ dev_dependencies:
   test: ^1.6.0
   uuid: ^2.0.0
   webdriver: ^2.0.0
+
+dependency_overrides:
+  devtools:
+    path:
+      /usr/local/google/home/alanknight/dart/devtools/packages/devtools
+  vm_service_lib: 3.21.0
